@@ -21,7 +21,7 @@ const Product = mongoose.model("Product", productSchema);
 // get all products 
 
 app.get("/products", (req, res) => {
-  const { min, max, category, title } = req.query;
+  const { min, max, category, title,price } = req.query;
 
   Product.find(
     {
@@ -30,6 +30,7 @@ app.get("/products", (req, res) => {
         { max: max },
         { category: category },
         { title: title },
+        {price:price}
       ],
     },
     (err, products) => {
@@ -51,6 +52,9 @@ app.get("/products", (req, res) => {
         products = products.filter((p) =>
           p.title.toLowerCase().includes(title.toLowerCase())
         );
+        if(price){
+          products=products.filter((p)=>p.price===price)
+        }
       }
 
       if (products.length > 0) {
@@ -128,6 +132,23 @@ app.put("/products/:id", (req, res) => {
   });
 });
 
+
+function initProduct() {
+  Product.findOne((err, product) => {
+    if (!product) {
+      fs.readFile("./products.json", "utf8", (err, data) => {
+        let initProducts = JSON.parse(data);
+        Product.insertMany(initProducts, (err, products) => {});
+      });
+    }
+  });
+}
+
+initProduct();
+
+app.get("*", (req, res) => {
+  res.send(404);
+});
 
 
 
