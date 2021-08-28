@@ -6,6 +6,9 @@ app.use(express.json());
 const mongoose = require("mongoose");
 const { restart } = require("nodemon");
 
+const { v4: uuidv4 } = require('uuid');
+
+
 const productSchema = new mongoose.Schema({
   title: String,
   id: String,
@@ -17,8 +20,10 @@ const productSchema = new mongoose.Schema({
 
 const Product = mongoose.model("Product", productSchema);
 
-// get all products 
 
+
+
+// get all products 
 
 app.get("/products:",(req, res) => {
   Product.find((err,products)=>{
@@ -107,17 +112,15 @@ app.post("/products", (req, res) => {
 
 // delete specific product by id from the list
 
-app.delete("/products/:id", (req, res) => {
+app.delete("/products/:id", async (req, res) => {
  
-   const{id}=req.params;
-   
-   Product.findOneAndDelete(id, (err, product) => {
-     if(product){
-       res.send("Product was deleted successfully")
-     }else{
-       res.send(" Failed to delete,Can't find the product")
-     }
-   });
+  try{
+    const {id} = req.params;
+    await Product.findByIdAndDelete(id, (err, product) => {
+    res.send(product)})
+} catch(err) {
+    res.send("Product Not Found")
+}
 });
 
 // update specific product in list
@@ -126,6 +129,7 @@ app.put("/products/:id", (req, res) => {
   const {id}=req.params;
   const {title, price, description, image, category}=req.body;
   const updateFields={}
+  
   title ? (updateFields.title = title) : null;
   price ? (updateFields.price = price) : null;
   description ? (updateFields.description = description) : null;
@@ -141,23 +145,24 @@ app.put("/products/:id", (req, res) => {
   });
 });
 
-
-function initProduct() {
-  Product.findOne((err, product) => {
-    if (!product) {
+//initialize DB
+function initProducts() {
+  Product.findOne((err, data) => {
+    if (!data) {
       fs.readFile("./products.json", "utf8", (err, data) => {
-        let initProducts = JSON.parse(data);
-        Product.insertMany(initProducts, (err, products) => {});
+        if (!err) {
+          let initProducts = JSON.parse(data);
+          //console.log("Initialization");
+          Product.insertMany(initProducts, (err, data) => {});
+        }
       });
     }
   });
 }
 
-initProduct();
 
-app.get("*", (req, res) => {
-  res.send(404);
-});
+
+initProducts();
 
 
 
