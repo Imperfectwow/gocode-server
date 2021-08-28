@@ -17,8 +17,17 @@ const productSchema = new mongoose.Schema({
 
 const Product = mongoose.model("Product", productSchema);
 
-
 // get all products 
+
+
+app.get("/products:",(req, res) => {
+  Product.find((err,products)=>{
+    res.send(products);
+});
+})
+
+
+// get all products by specific query ?price=2.5 or ?category=men clothing etc
 
 app.get("/products", (req, res) => {
   const { min, max, category, title,price } = req.query;
@@ -71,7 +80,7 @@ app.get("/products", (req, res) => {
 // get specific product
 app.get("/products/:id", (req, res) => {
   const { id } = req.params;
-console.log(id);
+  
 Product.findById(id,(err, data) => {
   if (!err)
   {
