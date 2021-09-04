@@ -2,11 +2,18 @@ const fs = require("fs");
 
 const express = require("express");
 const app = express();
+
+const cors = require("cors");
+app.use(cors());
+
 app.use(express.json());
 const mongoose = require("mongoose");
 const { restart } = require("nodemon");
 
-const { v4: uuidv4 } = require('uuid');
+const { v4: uuidv4 } = require("uuid");
+
+require('dotenv').config();
+
 
 
 const productSchema = new mongoose.Schema({
@@ -20,22 +27,18 @@ const productSchema = new mongoose.Schema({
 
 const Product = mongoose.model("Product", productSchema);
 
+// get all products
 
-
-
-// get all products 
-
-app.get("/products:",(req, res) => {
-  Product.find((err,products)=>{
+app.get("/products:", (req, res) => {
+  Product.find((err, products) => {
     res.send(products);
+  });
 });
-})
-
 
 // get all products by specific query ?price=2.5 or ?category=men clothing etc
 
 app.get("/products", (req, res) => {
-  const { min, max, category, title,price } = req.query;
+  const { min, max, category, title, price } = req.query;
 
   Product.find(
     {
@@ -44,7 +47,7 @@ app.get("/products", (req, res) => {
         { max: max },
         { category: category },
         { title: title },
-        {price:price}
+        { price: price },
       ],
     },
     (err, products) => {
@@ -66,8 +69,8 @@ app.get("/products", (req, res) => {
         products = products.filter((p) =>
           p.title.toLowerCase().includes(title.toLowerCase())
         );
-        if(price){
-          products=products.filter((p)=>p.price===price)
+        if (price) {
+          products = products.filter((p) => p.price === price);
         }
       }
 
@@ -80,62 +83,56 @@ app.get("/products", (req, res) => {
   );
 });
 
-
-
 // get specific product
 app.get("/products/:id", (req, res) => {
   const { id } = req.params;
-  
-Product.findById(id,(err, data) => {
-  if (!err)
-  {
-    res.send(data);
-  }
-  else
-  {
-    res.send("ERROR, did not find product.");
-  }
-});
+
+  Product.findById(id, (err, data) => {
+    if (!err) {
+      res.send(data);
+    } else {
+      res.send("ERROR, did not find product.");
+    }
+  });
 });
 
 // add specific products to list
 
 app.post("/products", (req, res) => {
-  const { title, price, description,image,category } = req.body;
-  if(title && price && description && image && category) {
-    const product=new Product({title, price, description, image, category});
+  const { title, price, description, image, category } = req.body;
+  if (title && price && description && image && category) {
+    const product = new Product({ title, price, description, image, category });
     product.save();
-    res.send("The product was added successfully to the list")
-  } 
-  else res.send("missing products values");
+    res.send("The product was added successfully to the list");
+  } else res.send("missing products values");
 });
 
 // delete specific product by id from the list
 
 app.delete("/products/:id", async (req, res) => {
- 
-  try{
-    const {id} = req.params;
+  try {
+    const { id } = req.params;
     await Product.findByIdAndDelete(id, (err, product) => {
-    res.send(product)})
-} catch(err) {
-    res.send("Product Not Found")
-}
+      res.send(product);
+    });
+  } catch (err) {
+    res.send("Product Not Found");
+  }
 });
 
 // update specific product in list
 
 app.put("/products/:id", (req, res) => {
-  const {id}=req.params;
-  const {title, price, description, image, category}=req.body;
-  const updateFields={}
-  
+  const { id } = req.params;
+  const { title, price, description, image, category } = req.body;
+  const updateFields = {};
+
   title ? (updateFields.title = title) : null;
   price ? (updateFields.price = price) : null;
   description ? (updateFields.description = description) : null;
   category ? (updateFields.category = category) : null;
   image ? (updateFields.image = image) : null;
-  
+
   Product.findByIdAndUpdate(id, updateFields, (err, data) => {
     if (!err) {
       res.send("Updated.");
@@ -160,14 +157,12 @@ function initProducts() {
   });
 }
 
-
-
 initProducts();
 
-
+const {DB_USER,DB_PASSWORD,DB_HOST,DB_NAME}=process.env;
 
 mongoose.connect(
-  "mongodb://localhost/gocode_shop",
+  `mongodb+srv://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/${DB_NAME}?retryWrites=true&w=majority`,
   {
     useNewUrlParser: true,
     useCreateIndex: true,
