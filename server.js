@@ -4,6 +4,8 @@ const express = require("express");
 const app = express();
 
 const cors = require("cors");
+app.use(express.static('client/build'));
+
 app.use(cors());
 
 app.use(express.json());
@@ -29,7 +31,7 @@ const Product = mongoose.model("Product", productSchema);
 
 // get all products
 
-app.get("/products:", (req, res) => {
+app.get("/api/products:", (req, res) => {
   Product.find((err, products) => {
     res.send(products);
   });
@@ -37,7 +39,7 @@ app.get("/products:", (req, res) => {
 
 // get all products by specific query ?price=2.5 or ?category=men clothing etc
 
-app.get("/products", (req, res) => {
+app.get("/api/products", (req, res) => {
   const { min, max, category, title, price } = req.query;
 
   Product.find(
@@ -84,7 +86,7 @@ app.get("/products", (req, res) => {
 });
 
 // get specific product
-app.get("/products/:id", (req, res) => {
+app.get("/api/products/:id", (req, res) => {
   const { id } = req.params;
 
   Product.findById(id, (err, data) => {
@@ -98,7 +100,7 @@ app.get("/products/:id", (req, res) => {
 
 // add specific products to list
 
-app.post("/products", (req, res) => {
+app.post("/api/products", (req, res) => {
   const { title, price, description, image, category } = req.body;
   if (title && price && description && image && category) {
     const product = new Product({ title, price, description, image, category });
@@ -109,7 +111,7 @@ app.post("/products", (req, res) => {
 
 // delete specific product by id from the list
 
-app.delete("/products/:id", async (req, res) => {
+app.delete("/api/products/:id", async (req, res) => {
   try {
     const { id } = req.params;
     await Product.findByIdAndDelete(id, (err, product) => {
@@ -122,7 +124,7 @@ app.delete("/products/:id", async (req, res) => {
 
 // update specific product in list
 
-app.put("/products/:id", (req, res) => {
+app.put("/api/products/:id", (req, res) => {
   const { id } = req.params;
   const { title, price, description, image, category } = req.body;
   const updateFields = {};
@@ -141,6 +143,13 @@ app.put("/products/:id", (req, res) => {
     }
   });
 });
+
+// send all the routes that not /api/ to client 
+
+app.get('*', (req, res) => {
+  res.sendFile(__dirname+'/client/build/index.html');
+});
+
 
 //initialize DB
 function initProducts() {
